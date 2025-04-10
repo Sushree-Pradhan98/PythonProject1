@@ -41,7 +41,7 @@ def load_cvrp_data(file_path):
 
 
 class GeneticAlgorithmCVRP:
-    def __init__(self, locations, demands, vehicle_capacity, population_size=100, mutation_rate=0.1, generations=1000):
+    def __init__(self, locations, demands, vehicle_capacity, population_size=10, mutation_rate=0.1, generations=100):
         self.locations = np.array(locations)
         self.demands = np.array(demands)
         self.vehicle_capacity = vehicle_capacity
@@ -121,14 +121,36 @@ class GeneticAlgorithmCVRP:
         return best_solution
 
 
-# Load data from file
-file_path = "/Users/shreejoy/PycharmProjects/PythonProject1/Data/A-n48-k7.vrp"
-locations, demands, capacity = load_cvrp_data(file_path)
+# ------------------------------
+# Run Genetic Algorithm Multiple Times and Analyze
+# ------------------------------
+def run_multiple_times(file_path, num_runs=10):
+    locations, demands, capacity = load_cvrp_data(file_path)
+    distances = []
+    solutions = []
 
-# Solve using Genetic Algorithm
-ga_solver = GeneticAlgorithmCVRP(locations, demands, capacity)
-best_ga_solution = ga_solver.genetic_algorithm()
+    for _ in range(num_runs):
+        ga_solver = GeneticAlgorithmCVRP(locations, demands, capacity)
+        solution = ga_solver.genetic_algorithm()
+        dist = ga_solver.total_distance(solution)
+        distances.append(dist)
+        solutions.append(solution)
 
-# Print the results with better formatting
+    best_distance = min(distances)
+    worst_distance = max(distances)
+    avg_distance = np.mean(distances)
+    std_distance = np.std(distances)
+    best_route = solutions[distances.index(best_distance)]
+
+    print("\n--- Genetic Algorithm Results ---")
+    print(f"Best Distance:  {best_distance:.2f}")
+    print(f"Worst Distance: {worst_distance:.2f}")
+    print(f"Avg Distance:   {avg_distance:.2f}")
+    print(f"Std Deviation:  {std_distance:.2f}")
+    print(f"Best Route:     {best_route}")
 
 
+# Example usage
+if __name__ == "__main__":
+    vrp_file = "Data/A-n32-k5.vrp"  # Replace with your VRP file path
+    run_multiple_times(vrp_file, num_runs=10)

@@ -3,6 +3,7 @@ import random
 import math
 from scipy.spatial import distance_matrix
 
+
 def load_cvrp_data(file_path):
     locations = []
     demands = []
@@ -43,7 +44,7 @@ class SimulatedAnnealingCVRP:
         self.demands = np.array(demands)
         self.vehicle_capacity = vehicle_capacity
         self.distance_matrix = distance_matrix(self.locations, self.locations)
-        self.num_customers = len(locations) - 1  # Exclude depot
+        self.num_customers = len(locations) - 1
         self.initial_temp = initial_temp
         self.cooling_rate = cooling_rate
         self.min_temp = min_temp
@@ -83,7 +84,8 @@ class SimulatedAnnealingCVRP:
             if new_solution[i] and new_solution[j]:
                 swap_idx1 = random.randint(0, len(new_solution[i]) - 1)
                 swap_idx2 = random.randint(0, len(new_solution[j]) - 1)
-                new_solution[i][swap_idx1], new_solution[j][swap_idx2] = new_solution[j][swap_idx2], new_solution[i][swap_idx1]
+                new_solution[i][swap_idx1], new_solution[j][swap_idx2] = \
+                    new_solution[j][swap_idx2], new_solution[i][swap_idx1]
         return new_solution
 
     def simulated_annealing(self):
@@ -97,7 +99,8 @@ class SimulatedAnnealingCVRP:
             new_solution = self.random_neighbor(current_solution)
             new_distance = self.total_distance(new_solution)
 
-            if new_distance < current_distance or random.random() < math.exp((current_distance - new_distance) / temp):
+            if new_distance < current_distance or \
+                    random.random() < math.exp((current_distance - new_distance) / temp):
                 current_solution = new_solution
                 current_distance = new_distance
                 if new_distance < best_distance:
@@ -109,10 +112,32 @@ class SimulatedAnnealingCVRP:
         return best_solution, best_distance
 
 
-# Example usage with file path
-file_path = "/Users/shreejoy/PycharmProjects/PythonProject1/Data/A-n45-k7.vrp"
-locations, demands, capacity = load_cvrp_data(file_path)
+def run_multiple_times(file_path, num_runs=10):
+    locations, demands, capacity = load_cvrp_data(file_path)
+    distances = []
+    solutions = []
 
-# Solve using Simulated Annealing
-sa_solver = SimulatedAnnealingCVRP(locations, demands, capacity)
-best_sa_solution, best_sa_distance = sa_solver.simulated_annealing()
+    for _ in range(num_runs):
+        sa = SimulatedAnnealingCVRP(locations, demands, capacity)
+        solution, dist = sa.simulated_annealing()
+        distances.append(dist)
+        solutions.append(solution)
+
+    best_distance = min(distances)
+    worst_distance = max(distances)
+    avg_distance = np.mean(distances)
+    std_distance = np.std(distances)
+    best_route = solutions[distances.index(best_distance)]
+
+    print("\n--- Simulated Annealing Results ---")
+    print(f"Best Distance:  {best_distance:.2f}")
+    print(f"Worst Distance: {worst_distance:.2f}")
+    print(f"Avg Distance:   {avg_distance:.2f}")
+    print(f"Std Deviation:  {std_distance:.2f}")
+    print(f"Best Route:     {best_route}")
+
+
+# Example usage
+if __name__ == "__main__":
+    vrp_file = "Data/A-n32-k5.vrp"  # Change to your VRP file path
+    run_multiple_times(vrp_file, num_runs=10)

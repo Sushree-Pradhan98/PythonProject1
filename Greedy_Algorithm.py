@@ -84,10 +84,3 @@ class GreedyCVRP:
 
 
 # Load data from file
-file_path = "/Users/shreejoy/PycharmProjects/PythonProject1/Data/A-n32-k5.vrp"
-locations, demands, capacity = load_cvrp_data(file_path)
-
-# Solve using Greedy Algorithm
-greedy_solver = GreedyCVRP(locations, demands, capacity)
-best_greedy_solution = greedy_solver.greedy_solution()
-

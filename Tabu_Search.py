@@ -82,40 +82,67 @@ class TabuSearchCVRP:
                 continue
             for j in range(len(solution[i])):
                 for k in range(len(solution)):
-                    if i != k and solution[k]:
+                    if i != k:
                         new_solution = [list(route) for route in solution]
-                        new_solution[k].append(new_solution[i].pop(j))
-                        neighbors.append(new_solution)
-        return neighbors if neighbors else [solution]  # Ensure at least the original solution is returned
+                        if new_solution[i]:
+                            moved_customer = new_solution[i].pop(j)
+                            new_solution[k].append(moved_customer)
+                            neighbors.append(new_solution)
+        return neighbors if neighbors else [solution]
 
     def tabu_search(self):
         best_solution = self.initial_solution()
         best_distance = self.total_distance(best_solution)
+        current_solution = best_solution
         tabu_list = []
 
         for _ in range(self.max_iterations):
-            neighborhood = self.neighborhood(best_solution)
+            neighborhood = self.neighborhood(current_solution)
             if not neighborhood:
                 continue
-            best_neighbor = min(neighborhood, key=lambda sol: self.total_distance(sol))
-            best_neighbor_distance = self.total_distance(best_neighbor)
 
-            if best_neighbor_distance < best_distance and best_neighbor not in tabu_list:
-                best_solution = best_neighbor
-                best_distance = best_neighbor_distance
-                tabu_list.append(best_neighbor)
-
-                if len(tabu_list) > self.tabu_tenure:
-                    tabu_list.pop(0)
+            neighborhood = sorted(neighborhood, key=lambda sol: self.total_distance(sol))
+            for candidate in neighborhood:
+                if candidate not in tabu_list:
+                    current_solution = candidate
+                    dist = self.total_distance(candidate)
+                    if dist < best_distance:
+                        best_solution = candidate
+                        best_distance = dist
+                    tabu_list.append(candidate)
+                    if len(tabu_list) > self.tabu_tenure:
+                        tabu_list.pop(0)
+                    break
 
         return best_solution, best_distance
 
 
-# Load the data from the file
-file_path = "/Users/shreejoy/PycharmProjects/PythonProject1/Data/A-n37-k6.vrp"
-locations, demands, capacity = load_cvrp_data(file_path)
+def run_multiple_times(file_path, num_runs=10):
+    locations, demands, capacity = load_cvrp_data(file_path)
+    distances = []
+    solutions = []
 
-# Solve using Tabu Search
-tabu_solver = TabuSearchCVRP(locations, demands, capacity, tabu_tenure=10, max_iterations=200)
-best_tabu_solution, best_tabu_distance = tabu_solver.tabu_search()
+    for _ in range(num_runs):
+        solver = TabuSearchCVRP(locations, demands, capacity)
+        solution, dist = solver.tabu_search()
+        distances.append(dist)
+        solutions.append(solution)
 
+    best_distance = min(distances)
+    worst_distance = max(distances)
+    avg_distance = np.mean(distances)
+    std_distance = np.std(distances)
+    best_route = solutions[distances.index(best_distance)]
+
+    print("\n--- Tabu Search Results ---")
+    print(f"Best Distance:  {best_distance:.2f}")
+    print(f"Worst Distance: {worst_distance:.2f}")
+    print(f"Avg Distance:   {avg_distance:.2f}")
+    print(f"Std Deviation:  {std_distance:.2f}")
+    print(f"Best Route:     {best_route}")
+
+
+# Example usage
+if __name__ == "__main__":
+    vrp_file = "Data/A-n32-k5.vrp"  # Change to your actual VRP file
+    run_multiple_times(vrp_file, num_runs=10)

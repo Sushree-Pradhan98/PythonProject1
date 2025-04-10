@@ -6,7 +6,7 @@ def load_cvrp_data(file_path):
     locations = []
     demands = []
     vehicle_capacity = 0
-    num_customers = 0  # To track the correct size of demands list
+    num_customers = 0
 
     with open(file_path, 'r') as file:
         section = None
@@ -24,7 +24,7 @@ def load_cvrp_data(file_path):
                 section = 'depot'
                 continue
             elif parts[0] == 'CAPACITY':
-                vehicle_capacity = int(parts[-1])  # Extract the last element (which is the capacity value)
+                vehicle_capacity = int(parts[-1])
                 continue
             elif parts[0] == 'EOF':
                 break
@@ -32,10 +32,10 @@ def load_cvrp_data(file_path):
             if section == 'nodes':
                 locations.append((int(parts[1]), int(parts[2])))
             elif section == 'demands':
-                if len(demands) == 0:  # Ensure demands array size matches number of customers
+                if len(demands) == 0:
                     num_customers = len(locations)
-                    demands = [0] * num_customers  # Initialize demands list
-                demands[int(parts[0]) - 1] = int(parts[1])  # Correct indexing
+                    demands = [0] * num_customers
+                demands[int(parts[0]) - 1] = int(parts[1])
 
     return locations, demands, vehicle_capacity
 
@@ -52,10 +52,10 @@ class RandomCVRP:
         total_dist = 0
         for route in solution:
             if route:
-                total_dist += self.distance_matrix[0, route[0]]  # Depot to first customer
+                total_dist += self.distance_matrix[0, route[0]]
                 for i in range(len(route) - 1):
-                    total_dist += self.distance_matrix[route[i], route[i + 1]]  # Customer to next customer
-                total_dist += self.distance_matrix[route[-1], 0]  # Last customer to depot
+                    total_dist += self.distance_matrix[route[i], route[i + 1]]
+                total_dist += self.distance_matrix[route[-1], 0]
         return total_dist
 
     def random_solution(self):
@@ -77,11 +77,33 @@ class RandomCVRP:
         return solution
 
 
-# Load data from file
-file_path = "/Users/shreejoy/PycharmProjects/PythonProject1/Data/A-n39-k5.vrp"
-locations, demands, capacity = load_cvrp_data(file_path)
+def run_multiple_times(file_path, num_runs=10):
+    locations, demands, capacity = load_cvrp_data(file_path)
+    distances = []
+    solutions = []
 
-# Solve using RandomCVRP
-random_solver = RandomCVRP(locations, demands, capacity)
-random_solution = random_solver.random_solution()
+    for _ in range(num_runs):
+        random_solver = RandomCVRP(locations, demands, capacity)
+        solution = random_solver.random_solution()
+        dist = random_solver.total_distance(solution)
+        distances.append(dist)
+        solutions.append(solution)
 
+    best_distance = min(distances)
+    worst_distance = max(distances)
+    avg_distance = np.mean(distances)
+    std_distance = np.std(distances)
+    best_route = solutions[distances.index(best_distance)]
+
+    print("\n--- Random Search Results ---")
+    print(f"Best Distance:  {best_distance:.2f}")
+    print(f"Worst Distance: {worst_distance:.2f}")
+    print(f"Avg Distance:   {avg_distance:.2f}")
+    print(f"Std Deviation:  {std_distance:.2f}")
+    print(f"Best Route:     {best_route}")
+
+
+# Example usage
+if __name__ == "__main__":
+    vrp_file = "Data/A-n32-k5.vrp"  # Change this path to your file
+    run_multiple_times(vrp_file, num_runs=10)
